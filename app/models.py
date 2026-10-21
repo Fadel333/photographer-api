@@ -8,6 +8,7 @@ class EventType(str, Enum):
     wedding = "wedding"
     funeral = "funeral"
     birthday = "birthday"
+    matriculation = "matriculation"
     photoshoot = "photoshoot"
     other = "other"
 
