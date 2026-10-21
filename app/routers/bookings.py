@@ -97,6 +97,34 @@ def set_status(booking_id: int, status: BookingStatus,
     session.refresh(b)
     return b
 
+from pydantic import BaseModel
+
+class QuoteIn(BaseModel):
+    total_cents: int
+    deposit_pct: int = 30
+
+
+@router.patch("/{booking_id}/quote", response_model=BookingOut,
+              dependencies=[Depends(get_current_admin)])
+def set_quote(booking_id: int, data: QuoteIn,
+              session: Session = Depends(get_session)):
+    b = session.get(Booking, booking_id)
+    if not b:
+        raise HTTPException(404, "Not found")
+    if data.total_cents <= 0:
+        raise HTTPException(400, "Total must be greater than 0")
+    if data.deposit_pct < 1 or data.deposit_pct > 100:
+        raise HTTPException(400, "Deposit % must be between 1 and 100")
+
+    b.total_cents = data.total_cents
+    b.deposit_cents = int(data.total_cents * data.deposit_pct / 100)
+    b.status = BookingStatus.confirmed
+    b.updated_at = datetime.now(timezone.utc)
+    session.add(b)
+    session.commit()
+    session.refresh(b)
+    return b
+
 
 @router.post("/{booking_id}/deposit")
 def create_deposit(booking_id: int, session: Session = Depends(get_session)):
