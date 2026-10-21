@@ -24,6 +24,8 @@ def get_package(package_id: int, session: Session = Depends(get_session)):
 
 @router.post("", response_model=PackageOut, dependencies=[Depends(get_current_admin)])
 def create_package(data: PackageIn, session: Session = Depends(get_session)):
+    if data.deposit_pct < 1:
+        raise HTTPException(400, "Deposit percentage must be at least 1%")
     pkg = Package(**data.model_dump())
     session.add(pkg)
     session.commit()
@@ -35,6 +37,8 @@ def create_package(data: PackageIn, session: Session = Depends(get_session)):
               dependencies=[Depends(get_current_admin)])
 def update_package(package_id: int, data: PackageIn,
                    session: Session = Depends(get_session)):
+    if data.deposit_pct < 1:
+        raise HTTPException(400, "Deposit percentage must be at least 1%")
     pkg = session.get(Package, package_id)
     if not pkg:
         raise HTTPException(404, "Package not found")
